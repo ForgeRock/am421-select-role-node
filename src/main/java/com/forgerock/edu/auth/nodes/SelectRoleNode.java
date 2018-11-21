@@ -22,6 +22,7 @@ import com.iplanet.sso.SSOException;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.shared.debug.Debug;
+import java.util.List;
 import org.forgerock.openam.annotations.sm.Attribute;
 import org.forgerock.openam.auth.node.api.*;
 import org.forgerock.openam.core.CoreWrapper;
@@ -49,19 +50,12 @@ public class SelectRoleNode extends AbstractDecisionNode {
      */
     public interface Config {
         @Attribute(order = 100)
-        default String usernameHeader() {
-            return "X-OpenAM-Username";
+        default String defaultRole() {
+            return "ContactReader";
         }
 
         @Attribute(order = 200)
-        default String passwordHeader() {
-            return "X-OpenAM-Password";
-        }
-
-        @Attribute(order = 300)
-        default String secretKey() {
-            return "secretKey";
-        }
+        List<String> allRealmRoles();
     }
 
 
@@ -78,25 +72,22 @@ public class SelectRoleNode extends AbstractDecisionNode {
 
     @Override
     public Action process(TreeContext context) throws NodeProcessException {
-        boolean hasUsername = context.request.headers.containsKey(config.usernameHeader());
-        boolean hasPassword = context.request.headers.containsKey(config.passwordHeader());
-
-        if (!hasUsername || !hasPassword) {
-            return goTo(false).build();
-        }
-
-        String secret = config.secretKey();
-        String password = context.request.headers.get(config.passwordHeader()).get(0);
-        String username = context.request.headers.get(config.usernameHeader()).get(0);
+        String username = "demo";
         AMIdentity userIdentity = coreWrapper.getIdentity(username, context.sharedState.get(REALM).asString());
+        
         try {
-            if (secret.equals(password) && userIdentity != null && userIdentity.isExists() && userIdentity.isActive()) {
-                return goTo(true).replaceSharedState(context.sharedState.copy().put(USERNAME, username)).build();
+            if (userIdentity != null && userIdentity.isExists() 
+                    && userIdentity.isActive()) {
+                return goTo(true).replaceSharedState(
+                    context.sharedState.copy().put(
+                        USERNAME, username)).build();
             }
         } catch (IdRepoException e) {
-            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
+            debug.error("[" + DEBUG_FILE + "]: " +
+                "Error locating user '{}' ", e);
         } catch (SSOException e) {
-            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
+            debug.error("[" + DEBUG_FILE + "]: " +
+                "Error locating user '{}' ", e);
         }
         return goTo(false).build();
     }

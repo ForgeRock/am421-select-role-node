@@ -30,7 +30,7 @@
 
     <groupId>com.forgerock.edu.auth.nodes</groupId>
     <version>1.0-SNAPSHOT</version>    
-    <name>Template for an Auth Tree Node maven project</name>
+    <name>select-role-node</name>
     <description>An Authentication Tree Node for ForgeRock's Identity Platform</description>
     
     <repositories>
