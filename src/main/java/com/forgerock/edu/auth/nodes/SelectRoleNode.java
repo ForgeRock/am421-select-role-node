@@ -13,152 +13,91 @@
  *
  * Copyright 2018 ForgeRock AS.
  */
+
+
 package com.forgerock.edu.auth.nodes;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
 import com.iplanet.sso.SSOException;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.shared.debug.Debug;
-import org.forgerock.guice.core.InjectorHolder;
 import org.forgerock.openam.annotations.sm.Attribute;
-import org.forgerock.openam.auth.node.api.Action;
-import org.forgerock.openam.auth.node.api.Node;
-import org.forgerock.openam.auth.node.api.NodeProcessException;
-import org.forgerock.openam.auth.node.api.SingleOutcomeNode;
-import org.forgerock.openam.auth.node.api.TreeContext;
+import org.forgerock.openam.auth.node.api.*;
 import org.forgerock.openam.core.CoreWrapper;
 
 import javax.inject.Inject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.ChoiceCallback;
-import javax.security.auth.callback.TextOutputCallback;
-import java.util.Set;
 
-import static org.forgerock.openam.auth.node.api.Action.send;
 import static org.forgerock.openam.auth.node.api.SharedStateConstants.REALM;
 import static org.forgerock.openam.auth.node.api.SharedStateConstants.USERNAME;
 
-/**
- * A node that checks to see if zero-page login headers have specified username
- * and shared key for this request.
+/** 
+ * A node that checks to see if zero-page login headers have specified username and shared key 
+ * for this request. 
  */
-@Node.Metadata(outcomeProvider = SingleOutcomeNode.OutcomeProvider.class,
-        configClass = SelectRoleNode.Config.class,
-        configValidator = SelectRoleNodeConfigValidator.class)
-public class SelectRoleNode extends SingleOutcomeNode {
+@Node.Metadata(outcomeProvider  = AbstractDecisionNode.OutcomeProvider.class,
+               configClass      = SelectRoleNode.Config.class)
+public class SelectRoleNode extends AbstractDecisionNode {
 
     private final Config config;
     private final CoreWrapper coreWrapper;
-    private final AmIdentityHelper identityHelper;
     private final static String DEBUG_FILE = "SelectRoleNode";
-    private final static Debug DEBUG = Debug.getInstance(DEBUG_FILE);
+    protected Debug debug = Debug.getInstance(DEBUG_FILE);
 
     /**
      * Configuration for the node.
      */
     public interface Config {
-
-        @Attribute(order = 100, requiredValue = true)
-        default String defaultRole() {
-            return "ContactReader";
+        @Attribute(order = 100)
+        default String usernameHeader() {
+            return "X-OpenAM-Username";
         }
 
-        @Attribute(order = 200, requiredValue = true)
-        default Set<String> candidateRoles() {
-            try {
-                final AmIdentityHelper identityHelper = InjectorHolder.getInstance(AmIdentityHelper.class);
-                return identityHelper.findAllGroupNamesInRealm("/");
-            } catch (SSOException | IdRepoException ex) {
-                DEBUG.error("Error during retrieving groups in root realm", ex);
-                return ImmutableSet.of("ContactReader", "ContactAdmin", "ProfileAdmin");
-            }
+        @Attribute(order = 200)
+        default String passwordHeader() {
+            return "X-OpenAM-Password";
+        }
+
+        @Attribute(order = 300)
+        default String secretKey() {
+            return "secretKey";
         }
     }
 
+
     /**
      * Create the node.
-     *
      * @param config The service config.
      * @throws NodeProcessException If the configuration was not valid.
      */
     @Inject
-    public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper, AmIdentityHelper identityHelper) throws NodeProcessException {
+    public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper) throws NodeProcessException {
         this.config = config;
         this.coreWrapper = coreWrapper;
-        this.identityHelper = identityHelper;
     }
 
     @Override
     public Action process(TreeContext context) throws NodeProcessException {
-        String username = context.sharedState.get(USERNAME).asString();
-        String realm = context.sharedState.get(REALM).asString();
+        boolean hasUsername = context.request.headers.containsKey(config.usernameHeader());
+        boolean hasPassword = context.request.headers.containsKey(config.passwordHeader());
 
-        AMIdentity userIdentity = coreWrapper.getIdentity(username, realm);
-        String[] selectableRoles = calculateSelectableRoles(userIdentity);
-
-
-        if (context.hasCallbacks()) {
-            return context.getCallback(ChoiceCallback.class)
-                    .map(choiceCallback -> {
-                        final int[] selectedIndexes = choiceCallback.getSelectedIndexes();
-                        if (selectedIndexes.length != 1) {
-                            return send(ImmutableList.of(
-                                    createWarning("You should select one and only one role!"),
-                                    createSelectRoleChoiceCallback(selectableRoles)))
-                                    .build();
-                        } else {
-                            int selectedIndex = selectedIndexes[0];
-                            String selectedRole = selectableRoles[selectedIndex];
-                            return gotoNextWithSelectedRole(selectedRole);
-                        }
-                    }).orElseThrow(() -> new NodeProcessException("Required ChoiceCallback is missing"));
-
-        } else {
-            switch (selectableRoles.length) {
-                case 0:
-                    return gotoNextWithSelectedRole(config.defaultRole());
-                case 1:
-                    String selectedRole = selectableRoles[0];
-                    return gotoNextWithSelectedRole(selectedRole);
-                default:
-                    return sendCallbacks(createSelectRoleChoiceCallback(selectableRoles));
-
-            }
+        if (!hasUsername || !hasPassword) {
+            return goTo(false).build();
         }
-    }
 
-    private Action gotoNextWithSelectedRole(String selectedRole) {
-        return goToNext()
-                .putSessionProperty("selectedRole", selectedRole)
-                .build();
-    }
-
-    private Action sendCallbacks(Callback... callbacks) {
-        return send(ImmutableList.copyOf(callbacks))
-                .build();
-    }
-
-    private ChoiceCallback createSelectRoleChoiceCallback(String[] selectableRoles) {
-        return new ChoiceCallback("Select Role",
-                selectableRoles, 0, false);
-    }
-
-    private TextOutputCallback createWarning(String message) {
-        return new TextOutputCallback(TextOutputCallback.WARNING, message);
-    }
-
-    private String[] calculateSelectableRoles(AMIdentity userIdentity) throws NodeProcessException {
+        String secret = config.secretKey();
+        String password = context.request.headers.get(config.passwordHeader()).get(0);
+        String username = context.request.headers.get(config.usernameHeader()).get(0);
+        AMIdentity userIdentity = coreWrapper.getIdentity(username, context.sharedState.get(REALM).asString());
         try {
-            return identityHelper.findAllAssignedGroupNamesOfUser(userIdentity)
-                    .stream()
-                    .filter(groupName -> config.candidateRoles().contains(groupName))  // filter out groups not in candidateRoles
-                    .toArray(String[]::new);
-        } catch (SSOException | IdRepoException ex) {
-            throw new NodeProcessException("Error during querying user's group memberships", ex);
+            if (secret.equals(password) && userIdentity != null && userIdentity.isExists() && userIdentity.isActive()) {
+                return goTo(true).replaceSharedState(context.sharedState.copy().put(USERNAME, username)).build();
+            }
+        } catch (IdRepoException e) {
+            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
+        } catch (SSOException e) {
+            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
         }
+        return goTo(false).build();
     }
-
 }

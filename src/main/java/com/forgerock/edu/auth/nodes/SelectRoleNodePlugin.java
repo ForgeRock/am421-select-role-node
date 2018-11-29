@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SelectRoleNodePlugin extends AbstractNodeAmPlugin {
 
-	static private String currentVersion = "2.0";
+	static private String currentVersion = "1.0.0";
 	
     /** 
      * Specify the Map of list of node classes that the plugin is providing. These will then be installed and
@@ -110,8 +110,7 @@ public class SelectRoleNodePlugin extends AbstractNodeAmPlugin {
      */	
 	@Override
 	public void upgrade(String fromVersion) throws PluginException {
-            pluginTools.upgradeAuthNode(SelectRoleNode.class);
-            super.upgrade(fromVersion);
+		super.upgrade(fromVersion);
 	}
 
     /** 
