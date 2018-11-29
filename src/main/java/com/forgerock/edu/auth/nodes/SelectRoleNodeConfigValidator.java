@@ -34,7 +34,6 @@ public class SelectRoleNodeConfigValidator implements ServiceConfigValidator {
         validateDefaultRole(realm, map, allGroupNamesInRealm);
         validateCandidateRoles(realm, map, allGroupNamesInRealm);
 
-
     }
 
     private void validateDefaultRole(Realm realm, Map<String, Set<String>> map, Set<String> allGroupNamesInRealm) throws ServiceConfigException {
@@ -46,7 +45,7 @@ public class SelectRoleNodeConfigValidator implements ServiceConfigValidator {
 
         if (invalidRoleName.isPresent()) {
             throw new ServiceConfigException("defaultRole contains non-existing group name" +
-                    "in the current realm (" + realm + "): " + invalidRoleName.get());
+                    "in the current realm: " + invalidRoleName.get());
         }
     }
 
