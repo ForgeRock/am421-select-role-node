@@ -23,20 +23,25 @@ import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdRepoException;
 import com.sun.identity.shared.debug.Debug;
 import org.forgerock.openam.annotations.sm.Attribute;
-import org.forgerock.openam.auth.node.api.*;
+import org.forgerock.openam.auth.node.api.AbstractDecisionNode;
+import org.forgerock.openam.auth.node.api.Action;
+import org.forgerock.openam.auth.node.api.Node;
+import org.forgerock.openam.auth.node.api.NodeProcessException;
+import org.forgerock.openam.auth.node.api.TreeContext;
 import org.forgerock.openam.core.CoreWrapper;
 
 import javax.inject.Inject;
+import java.util.Set;
 
 import static org.forgerock.openam.auth.node.api.SharedStateConstants.REALM;
 import static org.forgerock.openam.auth.node.api.SharedStateConstants.USERNAME;
 
-/** 
- * A node that checks to see if zero-page login headers have specified username and shared key 
- * for this request. 
+/**
+ * A node that checks to see if zero-page login headers have specified username and shared key
+ * for this request.
  */
-@Node.Metadata(outcomeProvider  = AbstractDecisionNode.OutcomeProvider.class,
-               configClass      = SelectRoleNode.Config.class)
+@Node.Metadata(outcomeProvider = AbstractDecisionNode.OutcomeProvider.class,
+        configClass = SelectRoleNode.Config.class)
 public class SelectRoleNode extends AbstractDecisionNode {
 
     private final Config config;
@@ -48,25 +53,19 @@ public class SelectRoleNode extends AbstractDecisionNode {
      * Configuration for the node.
      */
     public interface Config {
-        @Attribute(order = 100)
-        default String usernameHeader() {
-            return "X-OpenAM-Username";
+        @Attribute(order = 100, requiredValue = true)
+        default String defaultRole() {
+            return "ContactReader";
         }
 
-        @Attribute(order = 200)
-        default String passwordHeader() {
-            return "X-OpenAM-Password";
-        }
-
-        @Attribute(order = 300)
-        default String secretKey() {
-            return "secretKey";
-        }
+        @Attribute(order = 200, requiredValue = true)
+        Set<String> candidateRoles();
     }
 
 
     /**
      * Create the node.
+     *
      * @param config The service config.
      * @throws NodeProcessException If the configuration was not valid.
      */
@@ -78,25 +77,22 @@ public class SelectRoleNode extends AbstractDecisionNode {
 
     @Override
     public Action process(TreeContext context) throws NodeProcessException {
-        boolean hasUsername = context.request.headers.containsKey(config.usernameHeader());
-        boolean hasPassword = context.request.headers.containsKey(config.passwordHeader());
-
-        if (!hasUsername || !hasPassword) {
-            return goTo(false).build();
-        }
-
-        String secret = config.secretKey();
-        String password = context.request.headers.get(config.passwordHeader()).get(0);
-        String username = context.request.headers.get(config.usernameHeader()).get(0);
-        AMIdentity userIdentity = coreWrapper.getIdentity(username, context.sharedState.get(REALM).asString());
+        String username = "demo";
+        AMIdentity userIdentity = coreWrapper.getIdentity(
+                username, context.sharedState.get(REALM).asString());
         try {
-            if (secret.equals(password) && userIdentity != null && userIdentity.isExists() && userIdentity.isActive()) {
-                return goTo(true).replaceSharedState(context.sharedState.copy().put(USERNAME, username)).build();
+            if (userIdentity != null && userIdentity.isExists()
+                    && userIdentity.isActive()) {
+                return goTo(true).replaceSharedState(
+                        context.sharedState.copy().put(
+                                USERNAME, username)).build();
             }
         } catch (IdRepoException e) {
-            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
+            debug.error("[" + DEBUG_FILE + "]: " +
+                    "Error locating user '{}' ", e);
         } catch (SSOException e) {
-            debug.error("[" + DEBUG_FILE + "]: " + "Error locating user '{}' ", e);
+            debug.error("[" + DEBUG_FILE + "]: " +
+                    "Error locating user '{}' ", e);
         }
         return goTo(false).build();
     }
