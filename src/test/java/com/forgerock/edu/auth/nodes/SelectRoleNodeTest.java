@@ -13,18 +13,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.ChoiceCallback;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
+// TODO Ch2L2Ex2 Task6: Observe the unit tests and run them
 class SelectRoleNodeTest {
     SelectRoleNode.Config defaultConfig;
     CoreWrapper coreWrapper;
@@ -64,7 +62,7 @@ class SelectRoleNodeTest {
                 .willReturn(userIdentity);
 
         given(identityHelper.findAllGroupNamesInRealm("/"))
-                .willReturn(ImmutableSet.of("def","first","second","third","fourth"));
+                .willReturn(ImmutableSet.of("def", "first", "second", "third", "fourth"));
 
         selectRoleNode = new SelectRoleNode(defaultConfig, coreWrapper, identityHelper);
     }
@@ -74,7 +72,7 @@ class SelectRoleNodeTest {
     void shouldReturnChoiceCallbackWhenSelectableRolesSizeIsGreaterThanOne() throws Exception {
 
         given(identityHelper.findAllAssignedGroupNamesOfUser(userIdentity))
-                .willReturn(ImmutableSet.of("def","second","fourth"));
+                .willReturn(ImmutableSet.of("def", "second", "fourth"));
 
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
         final TreeContext treeContext = new TreeContext(sharedState, externalRequestContext, Collections.emptyList());
@@ -85,7 +83,7 @@ class SelectRoleNodeTest {
         assertEquals(action.callbacks.size(), 1);
         assertTrue(action.callbacks.get(0) instanceof ChoiceCallback);
         final ChoiceCallback callback = (ChoiceCallback) action.callbacks.get(0);
-        assertArrayEquals(new String[] {"def", "second"}, callback.getChoices());
+        assertArrayEquals(new String[]{"def", "second"}, callback.getChoices());
     }
 
     @Test
@@ -93,7 +91,7 @@ class SelectRoleNodeTest {
     void shouldReturnSelectedRoleImmediatelyWhenSelectableIsOnlyOne() throws Exception {
 
         given(identityHelper.findAllAssignedGroupNamesOfUser(userIdentity))
-                .willReturn(ImmutableSet.of("second","fourth"));
+                .willReturn(ImmutableSet.of("second", "fourth"));
 
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
         final TreeContext treeContext = new TreeContext(sharedState, externalRequestContext, Collections.emptyList());

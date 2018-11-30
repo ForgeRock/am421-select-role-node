@@ -46,7 +46,13 @@ import static org.forgerock.openam.auth.node.api.SharedStateConstants.USERNAME;
  * A node that checks to see if zero-page login headers have specified username
  * and shared key for this request.
  */
-// TODO Ch2L2Ex2 Add configValidator = SelectRoleNodeConfigValidator.class to the metadata
+// TODO Ch2L2Ex2 Task3: Observe that the SelectRoleNode now extends SingleOutcomeNode
+// TODO Ch2L2Ex2 Task3:   Which provides the goToNext() method without parameters
+// TODO Ch2L2Ex2 Task3:     as it just has a single outcome.
+// TODO Ch2L2Ex2 Task3:   Note that the outcomeProvider is also set to
+// TODO Ch2L2Ex2 Task3:     SingleOutcomeNode.OutcomeProvider.class
+// TODO Ch2L2Ex2 Task5: Add configValidator = SelectRoleNodeConfigValidator.class to the metadata
+// TODO Ch2L2Ex2 Task5:   The SelectRoleNodeConfigValidator class has been provided as an example
 @Node.Metadata(outcomeProvider = SingleOutcomeNode.OutcomeProvider.class,
         configClass = SelectRoleNode.Config.class,
         configValidator = SelectRoleNodeConfigValidator.class)
@@ -55,14 +61,15 @@ public class SelectRoleNode extends SingleOutcomeNode {
     private final Config config;
     private final CoreWrapper coreWrapper;
     private final AmIdentityHelper identityHelper;
-    private final static String DEBUG_FILE = "SelectRoleNode";
-    private final static Debug DEBUG = Debug.getInstance(DEBUG_FILE);
+    private final static Debug DEBUG = Debug.getInstance("SelectRoleNode");
 
     /**
      * Configuration for the node.
      */
     public interface Config {
 
+        // TODO Ch2L2Ex2 Task5: Observe the @Attribute annotation's properties
+        // TODO Ch2L2Ex2 Task5:   Note that the attributes are now required 
         @Attribute(order = 100, requiredValue = true)
         default String defaultRole() {
             return "ContactReader";
@@ -74,8 +81,8 @@ public class SelectRoleNode extends SingleOutcomeNode {
                 // InjectorHolder.getInstance is used to obtain a reference to a Guice managed object
                 // This way the injector will instantiate AmIdentityHelper and if it has further dependencies, it will inject those.
                 final AmIdentityHelper identityHelper = InjectorHolder.getInstance(AmIdentityHelper.class);
-                // TODO Ch2L2Ex2 Query the group names within the top level realm ("/") by invoking the identityHelper's appropriate method
-                // TODO Ch2L2Ex2 and return with this instead of static values.
+                // TODO Ch2L2Ex2 Task5: Query the group names within the top level realm ("/") by invoking the identityHelper's appropriate method
+                // TODO Ch2L2Ex2 Task5: and return with this instead of static values.
                 return identityHelper.findAllGroupNamesInRealm("/");
             } catch (SSOException | IdRepoException ex) {
                 DEBUG.error("Error during retrieving groups in root realm", ex);
@@ -90,14 +97,14 @@ public class SelectRoleNode extends SingleOutcomeNode {
      * @param config The service config.
      * @throws NodeProcessException If the configuration was not valid.
      */
-    // TODO Ch2L2Ex2 Add an AMIdentityHelper reference to the constructor's parameter list
-    // TODO Ch2L2Ex2   It will be instantiated and injected automatically by Guice
+    // TODO Ch2L2Ex2 Task4: Add an AMIdentityHelper reference to the constructor's parameter list
+    // TODO Ch2L2Ex2 Task4:   It will be instantiated and injected automatically by Guice
     @Inject
     public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper, AmIdentityHelper identityHelper) throws NodeProcessException {
         this.config = config;
         this.coreWrapper = coreWrapper;
-        // TODO Ch2L2Ex2 Save the identityHelper reference into the instance variable named identityHelper
-        // TODO Ch2L2Ex2   Hint: this.identityHelper = identityHelper;
+        // TODO Ch2L2Ex2 Task4: Save the identityHelper reference into the instance variable named identityHelper
+        // TODO Ch2L2Ex2 Task4:   Hint: this.identityHelper = identityHelper;
         this.identityHelper = identityHelper;
     }
 
@@ -105,123 +112,128 @@ public class SelectRoleNode extends SingleOutcomeNode {
     public Action process(TreeContext context) throws NodeProcessException {
 
         String realm = context.sharedState.get(REALM).asString();
-        // TODO Ch2L2Ex2 Acquire the authenticated user's name from the sharedState.
-        // TODO Ch2L2Ex2   Hint: Use SharedStateConstants.USERNAME as the key.
+        // TODO Ch2L2Ex2 Task7: Acquire the authenticated user's name from the sharedState.
+        // TODO Ch2L2Ex2 Task7:   Hint: Use SharedStateConstants.USERNAME as the key.
         String username = context.sharedState.get(USERNAME).asString();
 
-        // TODO Ch2L2Ex2 Get the authenticated user's AMIdentity object by using the coreWrapper's getIdentity method.
-        // TODO Ch2L2Ex2   Hint: Use CoreWrapper.getIdentity(String username, String realm) method
+        // TODO Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using the coreWrapper's getIdentity method.
+        // TODO Ch2L2Ex2 Task7:   Hint: Use CoreWrapper.getIdentity(String username, String realm) method
         AMIdentity userIdentity = coreWrapper.getIdentity(username, realm);
 
-        // TODO Ch2L2Ex2 Calculate selectable roles by calling calculateSelectableRoles method and store it in the selectableRoles variable.
+        // TODO Ch2L2Ex2 Task7: Calculate selectable roles by calling calculateSelectableRoles method and store it in the selectableRoles variable.
         String[] selectableRoles = calculateSelectableRoles(userIdentity);
 
 
-        if (context.hasCallbacks()) {
+        if (!context.hasCallbacks()) {
+            // No callbacks, which means this is the first invocation
+
+            // TODO Ch2L2Ex2 Task7: Remove return goToNext().build() placeholder from the provided switch's
+            // TODO Ch2L2Ex2 Task7:   default branch and implement the proper business logic:
+            // TODO Ch2L2Ex2 Task7:   Based on the length of the selectableRoles array:
+
+            switch (selectableRoles.length) {
+                case 0:
+                    // TODO Ch2L2Ex2 Task7:     When selectableRoles.length = 0
+                    // TODO Ch2L2Ex2 Task7:       return gotoNextWithSelectedRole(config.defaultRole())
+                    return gotoNextWithSelectedRole(config.defaultRole());
+                case 1:
+                    // TODO Ch2L2Ex2 Task7:     When selectableRoles.length = 1
+                    // TODO Ch2L2Ex2 Task7:       return gotoNextWithSelectedRole(selectedRole)
+                    String selectedRole = selectableRoles[0];
+                    return gotoNextWithSelectedRole(selectedRole);
+                default:
+                    // TODO Ch2L2Ex2 Task7:     Otherwise
+                    // TODO Ch2L2Ex2 Task7:       send back a ChoiceCallback instance with the selectable roles
+                    // TODO Ch2L2Ex2 Task7:       Hint: use the sendCallbacks method and the createSelectRoleChoiceCallback method
+                    return sendCallbacks(createSelectRoleChoiceCallback(selectableRoles));
+
+            }
+
+        } else {
             // The callbacks were filled out by the client and sent back
             // Let's process it
 
-            // TODO Ch2L2Ex2 Find the ChoiceCallback in the context by invoking context.getCallback(ChoiceCallback.class)
-            // TODO Ch2L2Ex2 Store it in a variable called optionalChoiceCallback
+            // TODO Ch2L2Ex2 Task7: Find the ChoiceCallback in the context by invoking context.getCallback(ChoiceCallback.class)
+            // TODO Ch2L2Ex2 Task7:   and store it in the optionalChoiceCallback variable
             Optional<ChoiceCallback> optionalChoiceCallback
                     = context.getCallback(ChoiceCallback.class);
 
-            // TODO Ch2L2Ex2 Create two conditional branches: one for handling the situation
-            // TODO Ch2L2Ex2   when the ChoiceCallback is present in optionalChoiceCallback
-            // TODO Ch2L2Ex2   and one for the opposite case.
-
-            // TODO Ch2L2Ex2 When the ChoiceCallback is present
-            // TODO Ch2L2Ex2   Store the ChoiceCallback's selectedIndexes
-            // TODO Ch2L2Ex2     in a variable named selectedIndexes.
-            // TODO Ch2L2Ex2     Hint#1: use Optional.get() method to retrieve the ChoiceCallback reference
-            // TODO Ch2L2Ex2     Hint#2: use ChoiceCallback.getSelectedIndexes() method to retrieve the selectedIndexes array
-            // TODO Ch2L2Ex2   When the ChoiceCallback is present and the selectedIndexes.length != 1
-            // TODO Ch2L2Ex2     send back two callbacks:
-            // TODO Ch2L2Ex2       1. a TextOutputCallback with a warning message: "You should select one and only one role!"
-            // TODO Ch2L2Ex2       2. a ChoiceCallback with the selectableRoles
-            // TODO Ch2L2Ex2     Hint: use the provided createWarning() and createSelectRoleChoiceCallback() methods
-            // TODO Ch2L2Ex2   When the ChoiceCallback is present and the selectedIndexes.length = 1
-            // TODO Ch2L2Ex2     Calculate the selectedIndex. Hint: use the only element in the selectedIndexes array.
-            // TODO Ch2L2Ex2     Calculate the selectedRole by selecting it from the selectableRoles array by the selectedIndex.
-            // TODO Ch2L2Ex2       Hint: String selectedRole = selectableRoles[selectedIndex]
-            // TODO Ch2L2Ex2     Set the selectedRole session property to the Action and go to the next node.
-            // TODO Ch2L2Ex2       Hint: use the gotoNextWithSelectedRole(selectedRole) method
-            // TODO Ch2L2Ex2     Hint: use the provided createWarning() and createSelectRoleChoiceCallback() methods
-            // TODO Ch2L2Ex2 When the ChoiceCallback is not present
-            // TODO Ch2L2Ex2   throw new NodeProcessException("Required ChoiceCallback is missing");
-
             if (optionalChoiceCallback.isPresent()) {
+                // When the ChoiceCallback is present in the incoming request
+                //   (the authentication client submitted the user's choice)
+
+                // TODO Ch2L2Ex2 Task7: Remove the original line: return goToNext().build();
+                // TODO Ch2L2Ex2 Task7: Store the ChoiceCallback's selectedIndexes
+                // TODO Ch2L2Ex2 Task7:   in a variable named selectedIndexes.
+                // TODO Ch2L2Ex2 Task7:   Hint#1: use Optional.get() method to retrieve the ChoiceCallback reference
+                // TODO Ch2L2Ex2 Task7:   Hint#2: use ChoiceCallback.getSelectedIndexes() method to retrieve the selectedIndexes array
                 final int[] selectedIndexes = optionalChoiceCallback.get().getSelectedIndexes();
+
+                // TODO Ch2L2Ex2 Task7: Create two conditional branches based on the selectedIndexes array's length
                 if (selectedIndexes.length != 1) {
+                    // TODO Ch2L2Ex2 Task7:   When the selectedIndexes.length != 1
+                    // TODO Ch2L2Ex2 Task7:     send back two callbacks:
+                    // TODO Ch2L2Ex2 Task7:       1. a TextOutputCallback with a warning message: "You should select one and only one role!"
+                    // TODO Ch2L2Ex2 Task7:       2. a ChoiceCallback with the selectableRoles
+                    // TODO Ch2L2Ex2 Task7:     Hint#1: use the provided createWarning() and createSelectRoleChoiceCallback() methods
+                    // TODO Ch2L2Ex2 Task7:     Hint#2: return sendCallbacks(createWarning("...",createSelectRoleChoiceCallback(selectableRoles))
                     return sendCallbacks(
                             createWarning("You should select one and only one role!"),
                             createSelectRoleChoiceCallback(selectableRoles));
                 } else {
+                    // TODO Ch2L2Ex2 Task7: When the selectedIndexes.length = 1
+                    // TODO Ch2L2Ex2 Task7:   Calculate the selectedIndex. Hint: use the only element in the selectedIndexes array.
                     int selectedIndex = selectedIndexes[0];
+                    // TODO Ch2L2Ex2 Task7:   Calculate the selectedRole by selecting it from the selectableRoles array by the selectedIndex.
+                    // TODO Ch2L2Ex2 Task7:     Hint: String selectedRole = selectableRoles[selectedIndex]
                     String selectedRole = selectableRoles[selectedIndex];
+                    // TODO Ch2L2Ex2 Task7:   Set the selectedRole session property to the Action and go to the next node.
+                    // TODO Ch2L2Ex2 Task7:     Hint#1: use the gotoNextWithSelectedRole(selectedRole) method
+                    // TODO Ch2L2Ex2 Task7:     Hint#2: use the provided createWarning() and createSelectRoleChoiceCallback() methods
                     return gotoNextWithSelectedRole(selectedRole);
                 }
             } else {
+                // TODO Ch2L2Ex2 Task7: Instead of returning goToNext().build()
+                // TODO Ch2L2Ex2 Task7:   throw new NodeProcessException("Required ChoiceCallback is missing");
                 throw new NodeProcessException("Required ChoiceCallback is missing");
-            }
-
-        } else {
-            // TODO Ch2L2Ex2 Create a switch branch based on the length of the selectableRoles array:
-            // TODO Ch2L2Ex2   When selectableRoles.length = 0
-            // TODO Ch2L2Ex2     return gotoNextWithSelectedRole(config.defaultRole())
-            // TODO Ch2L2Ex2   When selectableRoles.length = 1
-            // TODO Ch2L2Ex2     return gotoNextWithSelectedRole(selectedRole)
-            // TODO Ch2L2Ex2   Otherwise
-            // TODO Ch2L2Ex2     send back a ChoiceCallback instance with the selectable roles
-            // TODO Ch2L2Ex2     Hint: use the sendCallbacks method and the createSelectRoleChoiceCallback method
-
-            switch (selectableRoles.length) {
-                case 0:
-                    return gotoNextWithSelectedRole(config.defaultRole());
-                case 1:
-                    String selectedRole = selectableRoles[0];
-                    return gotoNextWithSelectedRole(selectedRole);
-                default:
-                    return sendCallbacks(createSelectRoleChoiceCallback(selectableRoles));
-
             }
         }
     }
 
     private Action gotoNextWithSelectedRole(String selectedRole) {
-        // TODO Ch2L2Ex2 put the selectedRole into a session property named selectedRole
-        // TODO Ch2L2Ex2   Hint: Use the ActionBuilder's putSessionProperty method.
-        // TODO Ch2L2Ex2         goToNext().putSessionProperty(...).build()
+        // TODO Ch2L2Ex2 Task7: put the selectedRole into a session property named selectedRole
+        // TODO Ch2L2Ex2 Task7:   Hint: Use the ActionBuilder's putSessionProperty method.
+        // TODO Ch2L2Ex2 Task7:         goToNext().putSessionProperty(...).build()
         return goToNext()
                 .putSessionProperty("selectedRole", selectedRole)
                 .build();
     }
 
-    // TODO Ch2L2Ex2 Observe the usage of the send() method.
-    // TODO Ch2L2Ex2   This is a convenient way of sending back callbacks to the client
+    // TODO Ch2L2Ex2 Task7: Observe the usage of the send() method.
+    // TODO Ch2L2Ex2 Task7:   This is a convenient way of sending back callbacks to the client
     private Action sendCallbacks(Callback... callbacks) {
         return send(ImmutableList.copyOf(callbacks))
                 .build();
     }
 
     private ChoiceCallback createSelectRoleChoiceCallback(String[] selectableRoles) {
-        // TODO Ch2L2Ex2 Observe the creation of the ChoiceCallback instance
-        // TODO Ch2L2Ex2   as this will be sent back to the authentication client
-        // TODO Ch2L2Ex2   and has to be filled in.
+        // TODO Ch2L2Ex2 Task7: Observe the creation of the ChoiceCallback instance
+        // TODO Ch2L2Ex2 Task7:   as this will be sent back to the authentication client
+        // TODO Ch2L2Ex2 Task7:   and has to be filled in.
         return new ChoiceCallback("Select Role",
                 selectableRoles, 0, false);
     }
 
     private TextOutputCallback createWarning(String message) {
-        // TODO Ch2L2Ex2 Observe the creation of the TextOutputCallback instance.
-        // TODO Ch2L2Ex2   this way we can send back a warning message to the
-        // TODO Ch2L2Ex2   authentication client.
+        // TODO Ch2L2Ex2 Task7: Observe the creation of the TextOutputCallback instance.
+        // TODO Ch2L2Ex2 Task7:   this way we can send back a warning message to the
+        // TODO Ch2L2Ex2 Task7:   authentication client.
         return new TextOutputCallback(TextOutputCallback.WARNING, message);
     }
 
-    // TODO Ch2L2Ex2 Observe the next method, where the selectable roles of
-    // TODO Ch2L2Ex2   the userIdentity are calculated by intersecting the
-    // TODO Ch2L2Ex2   user's group memberships with the candidateRoles.
+    // TODO Ch2L2Ex2 Task7: Observe the next method, where the selectable roles of
+    // TODO Ch2L2Ex2 Task7:   the userIdentity are calculated by intersecting the
+    // TODO Ch2L2Ex2 Task7:   user's group memberships with the candidateRoles.
     private String[] calculateSelectableRoles(AMIdentity userIdentity) throws NodeProcessException {
         try {
             return identityHelper.findAllAssignedGroupNamesOfUser(userIdentity)
