@@ -189,27 +189,39 @@ public class SelectRoleNode extends SingleOutcomeNode {
     }
 
     private Action gotoNextWithSelectedRole(String selectedRole) {
-        // TODO Ch2L2Ex2 put the selectedRole into a session property named selectedRole by the ActionBuilder
-        // TODO Ch2L2Ex2   Hint:
+        // TODO Ch2L2Ex2 put the selectedRole into a session property named selectedRole
+        // TODO Ch2L2Ex2   Hint: Use the ActionBuilder's putSessionProperty method.
+        // TODO Ch2L2Ex2         goToNext().putSessionProperty(...).build()
         return goToNext()
                 .putSessionProperty("selectedRole", selectedRole)
                 .build();
     }
 
+    // TODO Ch2L2Ex2 Observe the usage of the send() method.
+    // TODO Ch2L2Ex2   This is a convenient way of sending back callbacks to the client
     private Action sendCallbacks(Callback... callbacks) {
         return send(ImmutableList.copyOf(callbacks))
                 .build();
     }
 
     private ChoiceCallback createSelectRoleChoiceCallback(String[] selectableRoles) {
+        // TODO Ch2L2Ex2 Observe the creation of the ChoiceCallback instance
+        // TODO Ch2L2Ex2   as this will be sent back to the authentication client
+        // TODO Ch2L2Ex2   and has to be filled in.
         return new ChoiceCallback("Select Role",
                 selectableRoles, 0, false);
     }
 
     private TextOutputCallback createWarning(String message) {
+        // TODO Ch2L2Ex2 Observe the creation of the TextOutputCallback instance.
+        // TODO Ch2L2Ex2   this way we can send back a warning message to the
+        // TODO Ch2L2Ex2   authentication client.
         return new TextOutputCallback(TextOutputCallback.WARNING, message);
     }
 
+    // TODO Ch2L2Ex2 Observe the next method, where the selectable roles of
+    // TODO Ch2L2Ex2   the userIdentity are calculated by intersecting the
+    // TODO Ch2L2Ex2   user's group memberships with the candidateRoles.
     private String[] calculateSelectableRoles(AMIdentity userIdentity) throws NodeProcessException {
         try {
             return identityHelper.findAllAssignedGroupNamesOfUser(userIdentity)
