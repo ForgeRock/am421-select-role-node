@@ -46,6 +46,7 @@ import static org.forgerock.openam.auth.node.api.SharedStateConstants.USERNAME;
  * A node that checks to see if zero-page login headers have specified username
  * and shared key for this request.
  */
+// TODO Ch2L2Ex2 Add configValidator = SelectRoleNodeConfigValidator.class to the metadata
 @Node.Metadata(outcomeProvider = SingleOutcomeNode.OutcomeProvider.class,
         configClass = SelectRoleNode.Config.class,
         configValidator = SelectRoleNodeConfigValidator.class)
@@ -70,7 +71,11 @@ public class SelectRoleNode extends SingleOutcomeNode {
         @Attribute(order = 200, requiredValue = true)
         default Set<String> candidateRoles() {
             try {
+                // InjectorHolder.getInstance is used to obtain a reference to a Guice managed object
+                // This way the injector will instantiate AmIdentityHelper and if it has further dependencies, it will inject those.
                 final AmIdentityHelper identityHelper = InjectorHolder.getInstance(AmIdentityHelper.class);
+                // TODO Ch2L2Ex2 Query the group names within the top level realm ("/") by invoking the identityHelper's appropriate method
+                // TODO Ch2L2Ex2 and return with this instead of static values.
                 return identityHelper.findAllGroupNamesInRealm("/");
             } catch (SSOException | IdRepoException ex) {
                 DEBUG.error("Error during retrieving groups in root realm", ex);
@@ -85,25 +90,65 @@ public class SelectRoleNode extends SingleOutcomeNode {
      * @param config The service config.
      * @throws NodeProcessException If the configuration was not valid.
      */
+    // TODO Ch2L2Ex2 Add an AMIdentityHelper reference to the constructor's parameter list
+    // TODO Ch2L2Ex2   It will be instantiated and injected automatically by Guice
     @Inject
     public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper, AmIdentityHelper identityHelper) throws NodeProcessException {
         this.config = config;
         this.coreWrapper = coreWrapper;
+        // TODO Ch2L2Ex2 Save the identityHelper reference into the instance variable named identityHelper
+        // TODO Ch2L2Ex2   Hint: this.identityHelper = identityHelper;
         this.identityHelper = identityHelper;
     }
 
     @Override
     public Action process(TreeContext context) throws NodeProcessException {
-        String username = context.sharedState.get(USERNAME).asString();
-        String realm = context.sharedState.get(REALM).asString();
 
+        String realm = context.sharedState.get(REALM).asString();
+        // TODO Ch2L2Ex2 Acquire the authenticated user's name from the sharedState.
+        // TODO Ch2L2Ex2   Hint: Use SharedStateConstants.USERNAME as the key.
+        String username = context.sharedState.get(USERNAME).asString();
+
+        // TODO Ch2L2Ex2 Get the authenticated user's AMIdentity object by using the coreWrapper's getIdentity method.
+        // TODO Ch2L2Ex2   Hint: Use CoreWrapper.getIdentity(String username, String realm) method
         AMIdentity userIdentity = coreWrapper.getIdentity(username, realm);
+
+        // TODO Ch2L2Ex2 Calculate selectable roles by calling calculateSelectableRoles method and store it in the selectableRoles variable.
         String[] selectableRoles = calculateSelectableRoles(userIdentity);
 
 
         if (context.hasCallbacks()) {
+            // The callbacks were filled out by the client and sent back
+            // Let's process it
+
+            // TODO Ch2L2Ex2 Find the ChoiceCallback in the context by invoking context.getCallback(ChoiceCallback.class)
+            // TODO Ch2L2Ex2 Store it in a variable called optionalChoiceCallback
             Optional<ChoiceCallback> optionalChoiceCallback
                     = context.getCallback(ChoiceCallback.class);
+
+            // TODO Ch2L2Ex2 Create two conditional branches: one for handling the situation
+            // TODO Ch2L2Ex2   when the ChoiceCallback is present in optionalChoiceCallback
+            // TODO Ch2L2Ex2   and one for the opposite case.
+
+            // TODO Ch2L2Ex2 When the ChoiceCallback is present
+            // TODO Ch2L2Ex2   Store the ChoiceCallback's selectedIndexes
+            // TODO Ch2L2Ex2     in a variable named selectedIndexes.
+            // TODO Ch2L2Ex2     Hint#1: use Optional.get() method to retrieve the ChoiceCallback reference
+            // TODO Ch2L2Ex2     Hint#2: use ChoiceCallback.getSelectedIndexes() method to retrieve the selectedIndexes array
+            // TODO Ch2L2Ex2   When the ChoiceCallback is present and the selectedIndexes.length != 1
+            // TODO Ch2L2Ex2     send back two callbacks:
+            // TODO Ch2L2Ex2       1. a TextOutputCallback with a warning message: "You should select one and only one role!"
+            // TODO Ch2L2Ex2       2. a ChoiceCallback with the selectableRoles
+            // TODO Ch2L2Ex2     Hint: use the provided createWarning() and createSelectRoleChoiceCallback() methods
+            // TODO Ch2L2Ex2   When the ChoiceCallback is present and the selectedIndexes.length = 1
+            // TODO Ch2L2Ex2     Calculate the selectedIndex. Hint: use the only element in the selectedIndexes array.
+            // TODO Ch2L2Ex2     Calculate the selectedRole by selecting it from the selectableRoles array by the selectedIndex.
+            // TODO Ch2L2Ex2       Hint: String selectedRole = selectableRoles[selectedIndex]
+            // TODO Ch2L2Ex2     Set the selectedRole session property to the Action and go to the next node.
+            // TODO Ch2L2Ex2       Hint: use the gotoNextWithSelectedRole(selectedRole) method
+            // TODO Ch2L2Ex2     Hint: use the provided createWarning() and createSelectRoleChoiceCallback() methods
+            // TODO Ch2L2Ex2 When the ChoiceCallback is not present
+            // TODO Ch2L2Ex2   throw new NodeProcessException("Required ChoiceCallback is missing");
 
             if (optionalChoiceCallback.isPresent()) {
                 final int[] selectedIndexes = optionalChoiceCallback.get().getSelectedIndexes();
@@ -121,6 +166,15 @@ public class SelectRoleNode extends SingleOutcomeNode {
             }
 
         } else {
+            // TODO Ch2L2Ex2 Create a switch branch based on the length of the selectableRoles array:
+            // TODO Ch2L2Ex2   When selectableRoles.length = 0
+            // TODO Ch2L2Ex2     return gotoNextWithSelectedRole(config.defaultRole())
+            // TODO Ch2L2Ex2   When selectableRoles.length = 1
+            // TODO Ch2L2Ex2     return gotoNextWithSelectedRole(selectedRole)
+            // TODO Ch2L2Ex2   Otherwise
+            // TODO Ch2L2Ex2     send back a ChoiceCallback instance with the selectable roles
+            // TODO Ch2L2Ex2     Hint: use the sendCallbacks method and the createSelectRoleChoiceCallback method
+
             switch (selectableRoles.length) {
                 case 0:
                     return gotoNextWithSelectedRole(config.defaultRole());
@@ -135,6 +189,8 @@ public class SelectRoleNode extends SingleOutcomeNode {
     }
 
     private Action gotoNextWithSelectedRole(String selectedRole) {
+        // TODO Ch2L2Ex2 put the selectedRole into a session property named selectedRole by the ActionBuilder
+        // TODO Ch2L2Ex2   Hint:
         return goToNext()
                 .putSessionProperty("selectedRole", selectedRole)
                 .build();

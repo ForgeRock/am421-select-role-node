@@ -14,6 +14,26 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Validator class for the SelectRoleNode configuration.
+ * <p>The {@link SelectRoleNode.Config} interface has two properties:
+ *  {@link SelectRoleNode.Config#defaultRole()} and
+ * {@link SelectRoleNode.Config#candidateRoles()}. The goal of this
+ * class is to reject invalid configurations by throwing
+ * a {@link ServiceConfigException}.
+ * </p>
+ * <p>The applied validation rules are:</p>
+ * <ul>
+ *     <li>
+ *         {@code candidateRoles}:
+ *         <p>All candidate roles should be existing group names in the given realm.</p>
+ *     </li>
+ *     <li>
+ *         {@code defaultRole}:
+ *         <p>Should be one of the candidateRoles.</p>
+ *     </li>
+ * </ul>
+ */
 public class SelectRoleNodeConfigValidator implements ServiceConfigValidator {
 
     private AmIdentityHelper identityHelper;
@@ -24,40 +44,35 @@ public class SelectRoleNodeConfigValidator implements ServiceConfigValidator {
     }
 
     @Override
-    public void validate(Realm realm, List<String> list, Map<String, Set<String>> map) throws ServiceConfigException, ServiceErrorException {
+    public void validate(Realm realm, List<String> list, Map<String, Set<String>> config) throws ServiceConfigException, ServiceErrorException {
         final Set<String> allGroupNamesInRealm;
         try {
             allGroupNamesInRealm = identityHelper.findAllGroupNamesInRealm(realm.asPath());
         } catch (SSOException | IdRepoException ex) {
             throw new ServiceErrorException("Error during finding all groups in realm", ex);
         }
-        validateDefaultRole(realm, map, allGroupNamesInRealm);
-        validateCandidateRoles(realm, map, allGroupNamesInRealm);
+        final Set<String> candidateRoles = config.get("candidateRoles");
+        validateCandidateRoles(realm, candidateRoles, allGroupNamesInRealm);
+
+        final String defaultRole = config.get("defaultRole").iterator().next();
+        validateDefaultRole(defaultRole, candidateRoles);
 
     }
 
-    private void validateDefaultRole(Realm realm, Map<String, Set<String>> map, Set<String> allGroupNamesInRealm) throws ServiceConfigException {
-        final Set<String> defaultRole = map.get("defaultRole");
-
-        final Optional<String> invalidRoleName = defaultRole.stream()
-                .filter(candidateRole -> !allGroupNamesInRealm.contains(candidateRole))
-                .findAny();
-
-        if (invalidRoleName.isPresent()) {
-            throw new ServiceConfigException("defaultRole contains non-existing group name" +
-                    "in the current realm: " + invalidRoleName.get());
+    private void validateDefaultRole(String defaultRole, Set<String> candidateRoles) throws ServiceConfigException {
+        if (!candidateRoles.contains(defaultRole)) {
+            throw new ServiceConfigException("defaultRole is not one of the candidateRoles");
         }
     }
 
-    private void validateCandidateRoles(Realm realm, Map<String, Set<String>> map, Set<String> allGroupNamesInRealm) throws ServiceConfigException {
-        final Set<String> candidateRoles = map.get("candidateRoles");
-        final List<String> invalidRoleNames = candidateRoles.stream()
+    private void validateCandidateRoles(Realm realm, Set<String> candidateRoles, Set<String> allGroupNamesInRealm) throws ServiceConfigException {
+        final String invalidRoleNames = candidateRoles.stream()
                 .filter(candidateRole -> !allGroupNamesInRealm.contains(candidateRole))
-                .collect(Collectors.toList());
+                .collect(Collectors.joining());
+
         if (!invalidRoleNames.isEmpty()) {
-            final String invalidRoleNamesString = invalidRoleNames.stream().collect(Collectors.joining());
             throw new ServiceConfigException("candidateRoles contains non-existing group name(s) " +
-                    "in the current realm (" + realm + "): " + invalidRoleNamesString);
+                    "in realm " + realm + " : " + invalidRoleNames);
         }
     }
 }
