@@ -146,7 +146,6 @@ public class SelectRoleNode extends SingleOutcomeNode {
                     // TODO Ch2L2Ex2 Task7:       send back a ChoiceCallback instance with the selectable roles
                     // TODO Ch2L2Ex2 Task7:       Hint: use the sendCallbacks method and the createSelectRoleChoiceCallback method
                     return sendCallbacks(createSelectRoleChoiceCallback(selectableRoles));
-
             }
 
         } else {
@@ -184,6 +183,17 @@ public class SelectRoleNode extends SingleOutcomeNode {
                     // TODO Ch2L2Ex2 Task7: When the selectedIndexes.length = 1
                     // TODO Ch2L2Ex2 Task7:   Calculate the selectedIndex. Hint: use the only element in the selectedIndexes array.
                     int selectedIndex = selectedIndexes[0];
+
+                    // TODO Ch2L2Ex2 Task7:   Check whether the selected index is negative or selectedIndex >= selectableRoles.length
+                    // TODO Ch2L2Ex2 Task7:     In these cases send back a warning and the callbacks as before
+                    // TODO Ch2L2Ex2 Task7:     The warning message should be something like this:
+                    // TODO Ch2L2Ex2 Task7:       "Non-existing index is received, choose an existing one"
+                    // TODO Ch2L2Ex2 Task7:     Hint: return sendCallbacks(createWarning("...",createSelectRoleChoiceCallback(selectableRoles))
+                    if (selectedIndex < 0 || selectedIndex >= selectableRoles.length) {
+                        return sendCallbacks(
+                                createWarning("Non-existing index is received, choose an existing one"),
+                                createSelectRoleChoiceCallback(selectableRoles));
+                    }
                     // TODO Ch2L2Ex2 Task7:   Calculate the selectedRole by selecting it from the selectableRoles array by the selectedIndex.
                     // TODO Ch2L2Ex2 Task7:     Hint: String selectedRole = selectableRoles[selectedIndex]
                     String selectedRole = selectableRoles[selectedIndex];
@@ -236,9 +246,14 @@ public class SelectRoleNode extends SingleOutcomeNode {
     // TODO Ch2L2Ex2 Task7:   user's group memberships with the candidateRoles.
     private String[] calculateSelectableRoles(AMIdentity userIdentity) throws NodeProcessException {
         try {
-            return identityHelper.findAllAssignedGroupNamesOfUser(userIdentity)
+            final Set<String> assignedGroupNames =
+                    identityHelper.findAllAssignedGroupNamesOfUser(userIdentity);
+
+            final Set<String> candidateRoles = config.candidateRoles();
+
+            return assignedGroupNames
                     .stream()
-                    .filter(groupName -> config.candidateRoles().contains(groupName))  // filter out groups not in candidateRoles
+                    .filter(candidateRoles::contains)  // filter out groups not in candidateRoles
                     .toArray(String[]::new);
         } catch (SSOException | IdRepoException ex) {
             throw new NodeProcessException("Error during querying user's group memberships", ex);
