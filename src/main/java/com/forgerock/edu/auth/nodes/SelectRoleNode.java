@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.ChoiceCallback;
 import javax.security.auth.callback.TextOutputCallback;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.forgerock.openam.auth.node.api.Action.send;
@@ -101,20 +102,23 @@ public class SelectRoleNode extends SingleOutcomeNode {
 
 
         if (context.hasCallbacks()) {
-            return context.getCallback(ChoiceCallback.class)
-                    .map(choiceCallback -> {
-                        final int[] selectedIndexes = choiceCallback.getSelectedIndexes();
-                        if (selectedIndexes.length != 1) {
-                            return send(ImmutableList.of(
-                                    createWarning("You should select one and only one role!"),
-                                    createSelectRoleChoiceCallback(selectableRoles)))
-                                    .build();
-                        } else {
-                            int selectedIndex = selectedIndexes[0];
-                            String selectedRole = selectableRoles[selectedIndex];
-                            return gotoNextWithSelectedRole(selectedRole);
-                        }
-                    }).orElseThrow(() -> new NodeProcessException("Required ChoiceCallback is missing"));
+            Optional<ChoiceCallback> optionalChoiceCallback
+                    = context.getCallback(ChoiceCallback.class);
+
+            if (optionalChoiceCallback.isPresent()) {
+                final int[] selectedIndexes = optionalChoiceCallback.get().getSelectedIndexes();
+                if (selectedIndexes.length != 1) {
+                    return sendCallbacks(
+                            createWarning("You should select one and only one role!"),
+                            createSelectRoleChoiceCallback(selectableRoles));
+                } else {
+                    int selectedIndex = selectedIndexes[0];
+                    String selectedRole = selectableRoles[selectedIndex];
+                    return gotoNextWithSelectedRole(selectedRole);
+                }
+            } else {
+                throw new NodeProcessException("Required ChoiceCallback is missing");
+            }
 
         } else {
             switch (selectableRoles.length) {
