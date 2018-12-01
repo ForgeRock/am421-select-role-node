@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-// TODO Ch2L2Ex2 Task6: Observe the unit tests and run them
+// DONE Ch2L2Ex2 Task6: Observe the unit tests and run them
 class SelectRoleNodeTest {
     SelectRoleNode.Config config;
     CoreWrapper coreWrapper;
