@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
 
 // TODO Ch2L2Ex2 Task6: Observe the unit tests and run them
 class SelectRoleNodeTest {
-    SelectRoleNode.Config defaultConfig;
+    SelectRoleNode.Config config;
     CoreWrapper coreWrapper;
     AMIdentity userIdentity;
     AmIdentityHelper identityHelper;
@@ -60,7 +60,7 @@ class SelectRoleNodeTest {
 
     @BeforeEach
     void beforeEach() throws Exception {
-        defaultConfig = mock(SelectRoleNode.Config.class);
+        config = mock(SelectRoleNode.Config.class);
         coreWrapper = mock(CoreWrapper.class);
         userIdentity = mock(AMIdentity.class);
         identityHelper = mock(AmIdentityHelper.class);
@@ -70,9 +70,9 @@ class SelectRoleNodeTest {
         candidateRoles = ImmutableSet.of(defaultRole, "first", "second");
 
         // Config
-        given(defaultConfig.defaultRole())
+        given(config.defaultRole())
                 .willReturn(defaultRole);
-        given(defaultConfig.candidateRoles())
+        given(config.candidateRoles())
                 .willReturn(candidateRoles);
 
         // Shared State
@@ -96,7 +96,7 @@ class SelectRoleNodeTest {
                 .willReturn(userIdentity);
 
         // The tested class instance
-        selectRoleNode = new SelectRoleNode(defaultConfig, coreWrapper, identityHelper);
+        selectRoleNode = new SelectRoleNode(config, coreWrapper, identityHelper);
     }
 
     @Nested
@@ -124,7 +124,7 @@ class SelectRoleNodeTest {
             void shouldReturnChoiceCallbackWhenSelectableRolesSizeIsGreaterThanOne() throws Exception {
                 //WHEN
                 final Action action = selectRoleNode.process(treeContext);
-                //ASSERT
+                //ASSERTIONS
                 assertEquals(1, action.callbacks.size());
                 assertTrue(action.callbacks.get(0) instanceof ChoiceCallback);
                 final ChoiceCallback callback = (ChoiceCallback) action.callbacks.get(0);
@@ -275,7 +275,7 @@ class SelectRoleNodeTest {
                 void shouldReturnWarningAndTheProperChoiceCallbackWhenChoiceCallbackIsSentWithoutSelectedIndexes() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
-                    //ASSERT
+                    //ASSERTIONS
                     assertResponseContainsWarningAndProperChoiceCallback(action);
                 }
             }
@@ -294,7 +294,7 @@ class SelectRoleNodeTest {
                 void shouldReturnWarningAndTheProperChoiceCallbackWhenChoiceCallbackIsSentWithoutSelectedIndexes() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
-                    //ASSERT
+                    //ASSERTIONS
                     assertResponseContainsWarningAndProperChoiceCallback(action);
                 }
             }
@@ -313,7 +313,7 @@ class SelectRoleNodeTest {
                 void shouldGoToNextStateAndSetSelectedRoleProperlyWhenChoiceCallbackIsSentWithoutSelectedIndexes() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
-                    //ASSERT
+                    //ASSERTIONS
                     assertEquals("outcome", action.outcome);
                     assertEquals("second", action.sessionProperties.get("selectedRole"));
                 }
@@ -332,7 +332,7 @@ class SelectRoleNodeTest {
                 void shouldReturnWarningAndTheProperChoiceCallbackWhenChoiceCallbackIsSentWithNegativeSelectedIndex() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
-                    //ASSERT
+                    //ASSERTIONS
                     assertResponseContainsWarningAndProperChoiceCallback(action);
                 }
             }
@@ -350,7 +350,7 @@ class SelectRoleNodeTest {
                 void shouldReturnWarningAndTheProperChoiceCallbackWhenChoiceCallbackIsSentWithNegativeSelectedIndex() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
-                    //ASSERT
+                    //ASSERTIONS
                     assertResponseContainsWarningAndProperChoiceCallback(action);
                 }
             }
