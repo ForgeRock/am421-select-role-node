@@ -1,9 +1,9 @@
 package com.forgerock.edu.auth.nodes;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdType;
+import org.forgerock.guava.common.collect.ImmutableList;
 import org.forgerock.json.JsonValue;
 import org.forgerock.openam.auth.node.api.Action;
 import org.forgerock.openam.auth.node.api.ExternalRequestContext;
