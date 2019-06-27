@@ -33,10 +33,40 @@
     <name>select-role-node</name>
     <description>An Authentication Tree Node for ForgeRock's Identity Platform</description>
     <properties>
+        <am.version>6.5.1</am.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.forgerock.am</groupId>
+                <artifactId>openam-auth-trees</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+                <version>${am.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+        <dependency>
+            <groupId>org.forgerock.am</groupId>
+            <artifactId>auth-node-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.am</groupId>
+            <artifactId>openam-guice-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.am</groupId>
+            <artifactId>openam-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -49,8 +79,14 @@
             <version>2.19.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-    
+
     <repositories>
         <repository>
             <snapshots>
