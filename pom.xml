@@ -20,12 +20,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <artifactId>auth-tree-node-parent</artifactId>
-        <groupId>org.forgerock.am</groupId>
-        <version>6.0.0</version>
-    </parent>
-
     <artifactId>select-role-node</artifactId>
 
     <groupId>com.forgerock.edu.auth.nodes</groupId>
