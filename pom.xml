@@ -28,7 +28,7 @@
     <name>select-role-node</name>
     <description>An Authentication Tree Node for ForgeRock's Identity Platform</description>
     <properties>
-        <am.version>6.5.1</am.version>
+        <am.version>6.5.2</am.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
