@@ -8,7 +8,6 @@ import com.sun.identity.security.AdminTokenAction;
 import java.security.AccessController;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AmIdentityHelper {
 

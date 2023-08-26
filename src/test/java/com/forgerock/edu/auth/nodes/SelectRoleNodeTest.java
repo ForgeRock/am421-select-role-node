@@ -4,15 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdType;
-import com.sun.identity.idm.IdUtils;
 import org.forgerock.json.JsonValue;
-import org.forgerock.openam.auth.node.api.Action;
-import org.forgerock.openam.auth.node.api.ExternalRequestContext;
-import org.forgerock.openam.auth.node.api.NodeProcessException;
-import org.forgerock.openam.auth.node.api.SharedStateConstants;
-import org.forgerock.openam.auth.node.api.TreeContext;
-import org.junit.jupiter.api.*;
-import org.mockito.Mock;
+import org.forgerock.openam.auth.node.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
 import javax.security.auth.callback.Callback;
@@ -27,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 // TODO Ch2L2Ex2 Task6: Observe the unit tests
 class SelectRoleNodeTest {
