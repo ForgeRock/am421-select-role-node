@@ -57,7 +57,6 @@ import static org.forgerock.openam.auth.node.api.SharedStateConstants.REALM;
 public class SelectRoleNode extends SingleOutcomeNode {
 
     private final Config config;
-    private final CoreWrapper coreWrapper;
     private AmIdentityHelper identityHelper;
     private final static Debug DEBUG = Debug.getInstance("SelectRoleNode");
 
@@ -98,17 +97,15 @@ public class SelectRoleNode extends SingleOutcomeNode {
     // TODO Ch2L2Ex2 Task4: Add an AMIdentityHelper reference to the constructor's parameter list
     // TODO Ch2L2Ex2 Task4:   It will be instantiated and injected automatically by Guice
     @Inject
-    public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper) throws NodeProcessException {
+    public SelectRoleNode(@Assisted Config config) throws NodeProcessException {
         this.config = config;
-        this.coreWrapper = coreWrapper;
         // TODO Ch2L2Ex2 Task4: Save the identityHelper reference into the instance variable named identityHelper
         // TODO Ch2L2Ex2 Task4:   Hint: this.identityHelper = identityHelper;
     }
 
     // TODO Ch2L2Ex2 Task4: Remove this constructor, as this is just here to let the unit test class compile
-    public SelectRoleNode(@Assisted Config config, CoreWrapper coreWrapper, AmIdentityHelper identityHelper) throws NodeProcessException {
+    public SelectRoleNode(@Assisted Config config, AmIdentityHelper identityHelper) throws NodeProcessException {
         this.config = config;
-        this.coreWrapper = coreWrapper;
     }
 
     @Override
@@ -119,7 +116,7 @@ public class SelectRoleNode extends SingleOutcomeNode {
         // TODO Ch2L2Ex2 Task7:   Hint: Use SharedStateConstants.USERNAME as the key.
         String username = "demo";
 
-        // TODO Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using the coreWrapper's getIdentity method.
+        // TODO Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using the IdUtils' getIdentity method.
         // TODO Ch2L2Ex2 Task7:   Hint: Use CoreWrapper.getIdentity(String username, String realm) method
         AMIdentity userIdentity = null;
 

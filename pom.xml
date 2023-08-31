@@ -7,7 +7,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
-        <am.version>7.2.0</am.version>
+        <am.version>7.3.0</am.version>
         <built.jar.name>${project.artifactId}-${project.version}.${project.packaging}</built.jar.name>
         <built.jar>${project.build.directory}/${built.jar.name}</built.jar>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,37 +15,23 @@
         <maven.compiler.target>11</maven.compiler.target>
         <skip.integration.tests>true</skip.integration.tests>
     </properties>
-    <!--    <dependencyManagement>
-            <dependencies>
-                <dependency>
-                    <groupId>org.forgerock.am</groupId>
-                    <artifactId>openam-bom</artifactId>
-                    <type>pom</type>
-                    <version>${am.version}</version>
-                    <scope>import</scope>
-                </dependency>
-            </dependencies>
-        </dependencyManagement>-->
-
     <dependencies>
         <dependency>
             <groupId>org.forgerock.am</groupId>
             <artifactId>auth-node-api</artifactId>
             <version>${am.version}</version>
-
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.forgerock.am</groupId>
             <artifactId>openam-annotations</artifactId>
             <version>${am.version}</version>
-
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>26.0-jre</version>
+            <version>30.0-jre</version>
         </dependency>
         <dependency>
             <groupId>org.forgerock.am</groupId>
@@ -56,6 +42,17 @@
         <dependency>
             <groupId>org.forgerock.am</groupId>
             <artifactId>openam-shared</artifactId>
+            <version>${am.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.am</groupId>
+            <artifactId>customer-api</artifactId>
+            <version>${am.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.forgerock.am</groupId>
+            <artifactId>openam-identity</artifactId>
             <version>${am.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -83,7 +80,6 @@
             <version>${am.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-web-api</artifactId>
@@ -95,8 +91,6 @@
             <artifactId>org.restlet.ext.servlet</artifactId>
             <version>2.4.3</version>
         </dependency>
-
-
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
@@ -106,25 +100,59 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.2.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.19.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-
     <repositories>
         <repository>
             <id>maven-restlet</id>
             <name>Public online Restlet repository</name>
             <url>https://maven.restlet.talend.com</url>
         </repository>
+        <repository>
+            <id>forgerock-build-dependencies</id>
+            <name>ForgeRock Dependencies Repository</name>
+            <url>https://maven.forgerock.org/artifactory/forgerock-openam-7.3.0-dependencies</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
     </repositories>
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>5.1.9</version>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>3.1.2</version>
                 <configuration>
                     <skipTests>true</skipTests>
                     <excludes>
