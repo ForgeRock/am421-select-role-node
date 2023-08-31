@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.sun.identity.idm.AMIdentity;
 import com.sun.identity.idm.IdType;
+import com.sun.identity.idm.IdUtils;
 import org.forgerock.json.JsonValue;
 import org.forgerock.openam.auth.node.api.Action;
 import org.forgerock.openam.auth.node.api.ExternalRequestContext;
@@ -22,6 +23,7 @@ import javax.security.auth.callback.ChoiceCallback;
 import javax.security.auth.callback.TextOutputCallback;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,7 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-// TODO Ch2L2Ex2 Task6: Observe the unit tests and run them
+// TODO Ch2L2Ex2 Task6: Observe the unit tests
 class SelectRoleNodeTest {
     SelectRoleNode.Config config;
     CoreWrapper coreWrapper;
@@ -43,13 +45,13 @@ class SelectRoleNodeTest {
 
     TreeContext createTreeContextWithoutCallbacks() {
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
-        return new TreeContext(sharedState, externalRequestContext, Collections.emptyList());
+        return new TreeContext(sharedState, externalRequestContext, Collections.emptyList(), Optional.empty());
     }
 
     TreeContext createTreeContextWithCallbacks(Callback... callbacks) {
         final ImmutableList<Callback> callbackList = ImmutableList.copyOf(callbacks);
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
-        return new TreeContext(sharedState, externalRequestContext, callbackList);
+        return new TreeContext(sharedState, externalRequestContext, callbackList, Optional.empty());
     }
 
     void givenUserIsMemberOf(String... groupNames) throws Exception {
@@ -61,7 +63,6 @@ class SelectRoleNodeTest {
     @BeforeEach
     void beforeEach() throws Exception {
         config = mock(SelectRoleNode.Config.class);
-        coreWrapper = mock(CoreWrapper.class);
         userIdentity = mock(AMIdentity.class);
         identityHelper = mock(AmIdentityHelper.class);
         sharedState = mock(JsonValue.class);
@@ -91,12 +92,12 @@ class SelectRoleNodeTest {
         given(userIdentity.getName())
                 .willReturn("john");
 
-        // CoreWrapper
-        given(coreWrapper.getIdentity(eq("john"), anyString()))
+        // IdUtils
+        given(IdUtils.getIdentity(eq("john"), anyString()))
                 .willReturn(userIdentity);
 
         // The tested class instance
-        selectRoleNode = new SelectRoleNode(config, coreWrapper, identityHelper);
+        selectRoleNode = new SelectRoleNode(config, identityHelper);
     }
 
     @Nested
