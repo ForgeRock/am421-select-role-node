@@ -117,7 +117,7 @@ public class SelectRoleNode extends SingleOutcomeNode {
         String username = "demo";
 
         // TODO Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using the IdUtils' getIdentity method.
-        // TODO Ch2L2Ex2 Task7:   Hint: Use CoreWrapper.getIdentity(String username, String realm) method
+        // TODO Ch2L2Ex2 Task7:   Hint: Use IdUtils.getIdentity(String username, String realm) method
         AMIdentity userIdentity = null;
 
         // TODO Ch2L2Ex2 Task7: Calculate selectable roles by calling calculateSelectableRoles method and store it in the selectableRoles variable.
