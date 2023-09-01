@@ -15,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.opentest4j.AssertionFailedError;
 
 import javax.security.auth.callback.Callback;
@@ -29,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 // DONE Ch2L2Ex2 Task6: Observe the unit tests and run them
 class SelectRoleNodeTest {
@@ -37,11 +39,10 @@ class SelectRoleNodeTest {
     AMIdentity userIdentity;
     AmIdentityHelper identityHelper;
     JsonValue sharedState;
-    JsonValue transientState;
+    IdUtils idUtils;
     SelectRoleNode selectRoleNode;
     Set<String> candidateRoles;
     String defaultRole;
-
     TreeContext createTreeContextWithoutCallbacks() {
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
         return new TreeContext(sharedState, externalRequestContext, Collections.emptyList(), Optional.empty());
@@ -65,7 +66,7 @@ class SelectRoleNodeTest {
         userIdentity = mock(AMIdentity.class);
         identityHelper = mock(AmIdentityHelper.class);
         sharedState = mock(JsonValue.class);
-
+        idUtils = mockStatic(IdUtils.class);
         defaultRole = "Default";
         candidateRoles = ImmutableSet.of(defaultRole, "first", "second");
 
@@ -92,8 +93,10 @@ class SelectRoleNodeTest {
                 .willReturn("john");
 
         // IdUtils
-        given(IdUtils.getIdentity(eq("john"), anyString()))
+        given(idUtils.getIdentity(eq("john"), anyString()))
                 .willReturn(userIdentity);
+
+
 
         // The tested class instance
         selectRoleNode = new SelectRoleNode(config, identityHelper);
