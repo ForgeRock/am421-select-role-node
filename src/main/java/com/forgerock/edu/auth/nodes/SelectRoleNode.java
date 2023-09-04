@@ -116,9 +116,9 @@ public class SelectRoleNode extends SingleOutcomeNode {
         // DONE Ch2L2Ex2 Task7:   Hint: Use SharedStateConstants.USERNAME as the key.
         String username = context.sharedState.get(USERNAME).asString();
 
-        // DONE Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using IdUtils' getIdentity method.
-        // DONE Ch2L2Ex2 Task7:   Hint: Use IdUtils.getIdentity(String username, String realm) method
-        AMIdentity userIdentity = IdUtils.getIdentity(username, realm);
+        // DONE Ch2L2Ex2 Task7: Get the authenticated user's AMIdentity object by using identityHelper's getIdentity method.
+        // DONE Ch2L2Ex2 Task7:   Hint: Use identityHelper.getIdentity(String username, String realm) method
+        AMIdentity userIdentity = identityHelper.getIdentity(username, realm);
 
         // DONE Ch2L2Ex2 Task7: Calculate selectable roles by calling calculateSelectableRoles method and store it in the selectableRoles variable.
         String[] selectableRoles = calculateSelectableRoles(userIdentity);

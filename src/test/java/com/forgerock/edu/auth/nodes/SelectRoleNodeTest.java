@@ -11,10 +11,7 @@ import org.forgerock.openam.auth.node.api.ExternalRequestContext;
 import org.forgerock.openam.auth.node.api.NodeProcessException;
 import org.forgerock.openam.auth.node.api.SharedStateConstants;
 import org.forgerock.openam.auth.node.api.TreeContext;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.opentest4j.AssertionFailedError;
@@ -39,7 +36,6 @@ class SelectRoleNodeTest {
     AMIdentity userIdentity;
     AmIdentityHelper identityHelper;
     JsonValue sharedState;
-    IdUtils idUtils;
     SelectRoleNode selectRoleNode;
     Set<String> candidateRoles;
     String defaultRole;
@@ -66,7 +62,6 @@ class SelectRoleNodeTest {
         userIdentity = mock(AMIdentity.class);
         identityHelper = mock(AmIdentityHelper.class);
         sharedState = mock(JsonValue.class);
-        idUtils = mockStatic(IdUtils.class);
         defaultRole = "Default";
         candidateRoles = ImmutableSet.of(defaultRole, "first", "second");
 
@@ -92,14 +87,16 @@ class SelectRoleNodeTest {
         given(userIdentity.getName())
                 .willReturn("john");
 
-        // IdUtils
-        given(idUtils.getIdentity(eq("john"), anyString()))
+        given(identityHelper.getIdentity(eq("john"), anyString()))
                 .willReturn(userIdentity);
-
-
 
         // The tested class instance
         selectRoleNode = new SelectRoleNode(config, identityHelper);
+    }
+
+    @AfterEach
+    void afterEach() {
+        //idUtils.close();
     }
 
     @Nested

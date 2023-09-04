@@ -78,4 +78,15 @@ public class AmIdentityHelper {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Gets the AMIdentity of a user with username equal to uName that exists in realm
+     *
+     * @param username username of the user to get.
+     * @param realm realm the user belongs to.
+     * @return The AMIdentity of user with username equal to uName.
+     */
+    public AMIdentity getIdentity(String username, String realm) {
+        return IdUtils.getIdentity(username, realm);
+    }
+
 }
