@@ -2,12 +2,7 @@ package com.forgerock.edu.auth.nodes;
 
 import com.iplanet.sso.SSOException;
 import com.iplanet.sso.SSOToken;
-import com.sun.identity.idm.AMIdentity;
-import com.sun.identity.idm.AMIdentityRepository;
-import com.sun.identity.idm.IdRepoException;
-import com.sun.identity.idm.IdSearchControl;
-import com.sun.identity.idm.IdSearchResults;
-import com.sun.identity.idm.IdType;
+import com.sun.identity.idm.*;
 import com.sun.identity.security.AdminTokenAction;
 
 import java.security.AccessController;
@@ -83,5 +78,17 @@ public class AmIdentityHelper {
                 .map(group -> group.getName())
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Gets the AMIdentity of a user with username equal to uName that exists in realm
+     *
+     * @param username username of the user to get.
+     * @param realm realm the user belongs to.
+     * @return The AMIdentity of user with username equal to uName.
+     */
+    public AMIdentity getIdentity(String username, String realm) {
+        return IdUtils.getIdentity(username, realm);
+    }
+
 
 }

@@ -11,11 +11,8 @@ import org.forgerock.openam.auth.node.api.ExternalRequestContext;
 import org.forgerock.openam.auth.node.api.NodeProcessException;
 import org.forgerock.openam.auth.node.api.SharedStateConstants;
 import org.forgerock.openam.auth.node.api.TreeContext;
-import org.forgerock.openam.core.CoreWrapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.mockito.Mock;
 import org.opentest4j.AssertionFailedError;
 
 import javax.security.auth.callback.Callback;
@@ -30,19 +27,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 // TODO Ch2L2Ex2 Task6: Observe the unit tests
 class SelectRoleNodeTest {
     SelectRoleNode.Config config;
-    CoreWrapper coreWrapper;
     AMIdentity userIdentity;
     AmIdentityHelper identityHelper;
     JsonValue sharedState;
     SelectRoleNode selectRoleNode;
     Set<String> candidateRoles;
     String defaultRole;
-
     TreeContext createTreeContextWithoutCallbacks() {
         final ExternalRequestContext externalRequestContext = new ExternalRequestContext.Builder().build();
         return new TreeContext(sharedState, externalRequestContext, Collections.emptyList(), Optional.empty());
@@ -66,7 +61,6 @@ class SelectRoleNodeTest {
         userIdentity = mock(AMIdentity.class);
         identityHelper = mock(AmIdentityHelper.class);
         sharedState = mock(JsonValue.class);
-
         defaultRole = "Default";
         candidateRoles = ImmutableSet.of(defaultRole, "first", "second");
 
@@ -92,13 +86,13 @@ class SelectRoleNodeTest {
         given(userIdentity.getName())
                 .willReturn("john");
 
-        // IdUtils
-        given(IdUtils.getIdentity(eq("john"), anyString()))
+        given(identityHelper.getIdentity(eq("john"), anyString()))
                 .willReturn(userIdentity);
 
         // The tested class instance
         selectRoleNode = new SelectRoleNode(config, identityHelper);
     }
+
 
     @Nested
     @DisplayName("When no callbacks received")
@@ -310,7 +304,7 @@ class SelectRoleNodeTest {
                 }
 
                 @Test
-                @DisplayName("Should go to next state and set selectedRole propery")
+                @DisplayName("Should go to next state and set selectedRole property")
                 void shouldGoToNextStateAndSetSelectedRoleProperlyWhenChoiceCallbackIsSentWithoutSelectedIndexes() throws Exception {
                     //WHEN
                     final Action action = selectRoleNode.process(treeContext);
